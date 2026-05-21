@@ -10,6 +10,7 @@ This is intentionally compact enough to review quickly, but it still shows pract
 - Native ETH handling by wrapping to WETH before supplying to Aave.
 - Owner-only treasury operations with explicit validation and custom errors.
 - Unit tests that run locally without RPC access or forked mainnet state.
+- Optional Ethereum mainnet fork test against the real Aave V3 Pool.
 - A deployment script suitable for real Aave V3 deployments once addresses are configured.
 
 ## Project Layout
@@ -20,6 +21,7 @@ src/
   interfaces/                  Minimal ERC20, WETH, and Aave V3 interfaces
 test/
   AaveSupplyManager.t.sol      Unit tests
+  fork/                        Optional mainnet fork integration test
   mocks/                       Local pool, ERC20, and WETH mocks
 script/
   DeployAaveSupplyManager.s.sol
@@ -45,6 +47,16 @@ forge build
 ```shell
 forge test
 ```
+
+### Fork Integration Test
+
+Set an Ethereum mainnet RPC endpoint to run the real Aave V3 integration test:
+
+```shell
+MAINNET_RPC_URL=https://eth-mainnet.g.alchemy.com/v2/<key> forge test --match-path test/fork/*
+```
+
+Without `MAINNET_RPC_URL`, the fork test logs a skip message and exits early so the default suite remains clone-and-run friendly.
 
 ### Format
 
