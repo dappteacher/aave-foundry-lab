@@ -11,6 +11,7 @@ This is intentionally compact enough to review quickly, but it still shows pract
 - Owner-only treasury operations with explicit validation and custom errors.
 - Unit tests that run locally without RPC access or forked mainnet state.
 - Optional Ethereum mainnet fork test against the real Aave V3 Pool.
+- Reusable address-book library for supported Aave V3 markets.
 - A deployment script suitable for real Aave V3 deployments once addresses are configured.
 
 ## Project Layout
@@ -19,6 +20,7 @@ This is intentionally compact enough to review quickly, but it still shows pract
 src/
   AaveSupplyManager.sol        Main treasury adapter
   interfaces/                  Minimal ERC20, WETH, and Aave V3 interfaces
+  libraries/                   Network-specific Aave V3 addresses
 test/
   AaveSupplyManager.t.sol      Unit tests
   fork/                        Optional mainnet fork integration test
@@ -75,10 +77,13 @@ cp .env.example .env
 Example values:
 
 ```shell
+USE_ADDRESS_BOOK=true
 AAVE_POOL=0x...
 WRAPPED_NATIVE_TOKEN=0x...
 OWNER=0x...
 ```
+
+By default, the deploy script reads supported market addresses from `AaveV3Addresses` based on `block.chainid`. Set `USE_ADDRESS_BOOK=false` to provide `AAVE_POOL` and `WRAPPED_NATIVE_TOKEN` manually.
 
 Then run:
 
@@ -95,8 +100,6 @@ forge script script/DeployAaveSupplyManager.s.sol:DeployAaveSupplyManager \
 - This project uses local mocks for repeatable tests. For a production deployment, use the official Aave address book for the network you deploy to.
 - `AaveSupplyManager` supplies assets on behalf of itself, so the contract owns the resulting Aave position.
 - `rescueToken` is only for idle tokens accidentally left in the manager, not for assets already supplied into Aave.
-
----
 
 # Author
 
