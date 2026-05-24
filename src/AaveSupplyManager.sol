@@ -4,17 +4,25 @@ pragma solidity ^0.8.20;
 import {IAaveV3Pool} from "./interfaces/IAaveV3Pool.sol";
 import {IERC20} from "./interfaces/IERC20.sol";
 import {IWETH} from "./interfaces/IWETH.sol";
+import {SafeERC20} from "./libraries/SafeERC20.sol";
 
 /// @title AaveSupplyManager
 /// @notice Minimal owner-controlled treasury adapter for supplying assets to Aave V3.
 contract AaveSupplyManager {
+    using SafeERC20 for IERC20;
+
     uint256 public constant VARIABLE_INTEREST_RATE_MODE = 2;
 
     IAaveV3Pool public immutable pool;
     IWETH public immutable wrappedNativeToken;
     address public owner;
+    address public pendingOwner;
+    bool public paused;
 
     event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+    event OwnershipTransferStarted(address indexed previousOwner, address indexed pendingOwner);
+    event Paused(address indexed account);
+    event Unpaused(address indexed account);
     event Supplied(address indexed asset, uint256 amount, uint16 referralCode);
     event NativeSupplied(uint256 amount, uint16 referralCode);
     event Withdrawn(address indexed asset, uint256 requestedAmount, uint256 withdrawnAmount, address indexed recipient);
@@ -31,11 +39,16 @@ contract AaveSupplyManager {
     error NotOwner();
     error ZeroAddress();
     error ZeroAmount();
-    error TransferFailed();
+    error EnforcedPause();
     error UnhealthyPosition(uint256 healthFactor, uint256 minimumHealthFactor);
 
     modifier onlyOwner() {
         if (msg.sender != owner) revert NotOwner();
+        _;
+    }
+
+    modifier whenNotPaused() {
+        if (paused) revert EnforcedPause();
         _;
     }
 
@@ -56,11 +69,31 @@ contract AaveSupplyManager {
     function transferOwnership(address newOwner) external onlyOwner {
         if (newOwner == address(0)) revert ZeroAddress();
 
-        emit OwnershipTransferred(owner, newOwner);
-        owner = newOwner;
+        pendingOwner = newOwner;
+        emit OwnershipTransferStarted(owner, newOwner);
     }
 
-    function supplyToken(address asset, uint256 amount, uint16 referralCode) external onlyOwner {
+    function acceptOwnership() external {
+        if (msg.sender != pendingOwner) revert NotOwner();
+
+        address previousOwner = owner;
+        owner = pendingOwner;
+        pendingOwner = address(0);
+
+        emit OwnershipTransferred(previousOwner, owner);
+    }
+
+    function pause() external onlyOwner {
+        paused = true;
+        emit Paused(msg.sender);
+    }
+
+    function unpause() external onlyOwner {
+        paused = false;
+        emit Unpaused(msg.sender);
+    }
+
+    function supplyToken(address asset, uint256 amount, uint16 referralCode) external onlyOwner whenNotPaused {
         if (asset == address(0)) revert ZeroAddress();
         if (amount == 0) revert ZeroAmount();
 
@@ -70,7 +103,7 @@ contract AaveSupplyManager {
         emit Supplied(asset, amount, referralCode);
     }
 
-    function supplyNative(uint16 referralCode) external payable onlyOwner {
+    function supplyNative(uint16 referralCode) external payable onlyOwner whenNotPaused {
         if (msg.value == 0) revert ZeroAmount();
 
         wrappedNativeToken.deposit{value: msg.value}();
@@ -100,7 +133,7 @@ contract AaveSupplyManager {
         uint16 referralCode,
         address recipient,
         uint256 minimumHealthFactor
-    ) external onlyOwner {
+    ) external onlyOwner whenNotPaused {
         _borrowToken(asset, amount, interestRateMode, referralCode, recipient, minimumHealthFactor);
     }
 
@@ -110,13 +143,14 @@ contract AaveSupplyManager {
         uint16 referralCode,
         address recipient,
         uint256 minimumHealthFactor
-    ) external onlyOwner {
+    ) external onlyOwner whenNotPaused {
         _borrowToken(asset, amount, VARIABLE_INTEREST_RATE_MODE, referralCode, recipient, minimumHealthFactor);
     }
 
     function repayToken(address asset, uint256 amount, uint256 interestRateMode)
         external
         onlyOwner
+        whenNotPaused
         returns (uint256 repaid)
     {
         if (asset == address(0)) revert ZeroAddress();
@@ -132,16 +166,15 @@ contract AaveSupplyManager {
         if (token == address(0) || recipient == address(0)) revert ZeroAddress();
         if (amount == 0) revert ZeroAmount();
 
-        bool success = IERC20(token).transfer(recipient, amount);
-        if (!success) revert TransferFailed();
+        IERC20(token).safeTransfer(recipient, amount);
 
         emit TokenRescued(token, amount, recipient);
     }
 
     function _approveExact(address token, address spender, uint256 amount) private {
-        bool cleared = IERC20(token).approve(spender, 0);
-        bool approved = IERC20(token).approve(spender, amount);
-        if (!cleared || !approved) revert TransferFailed();
+        IERC20 erc20 = IERC20(token);
+        erc20.safeApprove(spender, 0);
+        erc20.safeApprove(spender, amount);
     }
 
     function _borrowToken(
@@ -162,8 +195,7 @@ contract AaveSupplyManager {
             revert UnhealthyPosition(healthFactor, minimumHealthFactor);
         }
 
-        bool success = IERC20(asset).transfer(recipient, amount);
-        if (!success) revert TransferFailed();
+        IERC20(asset).safeTransfer(recipient, amount);
 
         emit Borrowed(asset, amount, interestRateMode, recipient, healthFactor);
     }

@@ -126,6 +126,22 @@ contract AaveSupplyManagerTest is Test {
         manager.borrowVariableToken(address(usdc), 1e6, 0, recipient, 1.5e18);
     }
 
+    function testTwoStepOwnershipTransfer() public {
+        address newOwner = address(0xC0FFEE);
+
+        vm.prank(owner);
+        manager.transferOwnership(newOwner);
+
+        assertEq(manager.owner(), owner);
+        assertEq(manager.pendingOwner(), newOwner);
+
+        vm.prank(newOwner);
+        manager.acceptOwnership();
+
+        assertEq(manager.owner(), newOwner);
+        assertEq(manager.pendingOwner(), address(0));
+    }
+
     function testOwnerCanRescueIdleTokens() public {
         usdc.mint(address(manager), 100e6);
 
