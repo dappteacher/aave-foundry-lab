@@ -1,6 +1,6 @@
 # Aave V3 Supply Manager
 
-A small pure Foundry project that demonstrates Solidity integration patterns around Aave V3. The core contract is an owner-controlled treasury adapter that can supply ERC20 assets or native ETH, represented as WETH, into an Aave-compatible pool, withdraw supplied liquidity, borrow against collateral with a health-factor guard, and repay debt. A companion lens contract reads Aave account data such as collateral, debt, borrow capacity, liquidation threshold, LTV, and health factor.
+A small pure Foundry project that demonstrates Solidity integration patterns around Aave V3. The core contract is an owner-controlled treasury adapter that can supply ERC20 assets or native ETH, represented as WETH, into an Aave-compatible pool, withdraw supplied liquidity, borrow against collateral with a health-factor guard, and repay debt. Companion lens contracts read Aave account data and oracle prices for collateral, debt, borrow capacity, liquidation threshold, LTV, health factor, asset prices, and portfolio value estimates.
 
 This is intentionally compact enough to review quickly, but it still shows practical DeFi engineering habits: minimal protocol interfaces, custom errors, events, ownership controls, deterministic tests, mocks, and a deployment script driven by environment variables.
 
@@ -14,6 +14,7 @@ This is intentionally compact enough to review quickly, but it still shows pract
 - Optional Ethereum mainnet fork test against the real Aave V3 Pool.
 - Reusable address-book library for supported Aave V3 markets.
 - Position lens for Aave V3 account and health-factor data.
+- Oracle lens for Aave asset prices, price sources, and base-currency value estimates.
 - A deployment script suitable for real Aave V3 deployments once addresses are configured.
 
 ## Project Layout
@@ -22,6 +23,7 @@ This is intentionally compact enough to review quickly, but it still shows pract
 src/
   AaveSupplyManager.sol        Main treasury adapter
   AavePositionLens.sol         Read-only account risk helper
+  AaveOracleLens.sol           Read-only Aave oracle price helper
   interfaces/                  Minimal ERC20, WETH, and Aave V3 interfaces
   libraries/                   Network-specific Aave V3 addresses
 test/
@@ -103,6 +105,7 @@ forge script script/DeployAaveSupplyManager.s.sol:DeployAaveSupplyManager \
 - This project uses local mocks for repeatable tests. For a production deployment, use the official Aave address book for the network you deploy to.
 - `AaveSupplyManager` supplies assets on behalf of itself, so the contract owns the resulting Aave position.
 - Borrowing also happens on behalf of the manager. The manager checks the resulting health factor before transferring borrowed tokens to the chosen recipient.
+- `AaveOracleLens` accepts an `assetUnit` parameter for value estimates, such as `1e18` for WETH or `1e6` for USDC, so token decimal assumptions stay explicit.
 - `rescueToken` is only for idle tokens accidentally left in the manager, not for assets already supplied into Aave.
 
 ---

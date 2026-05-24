@@ -6,6 +6,7 @@ library AaveV3Addresses {
 
     struct Market {
         address pool;
+        address oracle;
         address wrappedNativeToken;
         address wrappedNativeAToken;
     }
@@ -23,6 +24,7 @@ library AaveV3Addresses {
     function ethereum() internal pure returns (Market memory market) {
         market = Market({
             pool: 0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2,
+            oracle: 0x54586bE62E3c3580375aE3723C145253060Ca0C2,
             wrappedNativeToken: 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2,
             wrappedNativeAToken: 0x4d5F47FA6A74757f35C14fD3a6Ef8E3C9BC514E8
         });

@@ -17,6 +17,7 @@ contract AaveV3AddressesTest is Test {
         AaveV3Addresses.Market memory market = AaveV3Addresses.get(1);
 
         assertEq(market.pool, 0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2);
+        assertEq(market.oracle, 0x54586bE62E3c3580375aE3723C145253060Ca0C2);
         assertEq(market.wrappedNativeToken, 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2);
         assertEq(market.wrappedNativeAToken, 0x4d5F47FA6A74757f35C14fD3a6Ef8E3C9BC514E8);
     }
