@@ -18,6 +18,8 @@ This is intentionally compact enough to review quickly, but it still shows pract
 - Position lens for Aave V3 account and health-factor data.
 - Oracle lens for Aave asset prices, price sources, and base-currency value estimates.
 - Internal security review notes and regression tests for access-control and risk boundaries.
+- Slippage, price, and risk assumptions documented with fuzz and invariant coverage.
+- Real network deployment configs and health-factor monitoring runbook.
 - A deployment script suitable for real Aave V3 deployments once addresses are configured.
 
 ## Project Layout
@@ -32,11 +34,16 @@ src/
 test/
   AaveSupplyManager.t.sol      Unit tests
   fork/                        Optional mainnet fork integration test
+  invariant/                   Stateful invariant tests for core flows
   mocks/                       Local pool, ERC20, and WETH mocks
   security/                    Security regression tests
 script/
   DeployAaveSupplyManager.s.sol
+  CheckAaveHealth.s.sol        Health-factor monitoring helper
 docs/
+  DEPLOYMENT.md                Per-network deployment config guide
+  MONITORING.md                Health factor and liquidation-risk runbook
+  RISK_ASSUMPTIONS.md          Slippage, price, and risk assumptions
   SECURITY_REVIEW.md           Internal review, residual risks, production checklist
 ```
 
@@ -89,12 +96,13 @@ Example values:
 
 ```shell
 USE_ADDRESS_BOOK=true
+DEPLOYMENT_CONFIG=config/deployments/ethereum.json
 AAVE_POOL=0x...
 WRAPPED_NATIVE_TOKEN=0x...
 OWNER=0x... # recommended: multisig address
 ```
 
-By default, the deploy script reads supported market addresses from `AaveV3Addresses` based on `block.chainid`. Set `USE_ADDRESS_BOOK=false` to provide `AAVE_POOL` and `WRAPPED_NATIVE_TOKEN` manually.
+By default, the deploy script reads `DEPLOYMENT_CONFIG` when provided. If no config file is set, it reads supported market addresses from `AaveV3Addresses` based on `block.chainid`. Set `USE_ADDRESS_BOOK=false` to provide `AAVE_POOL` and `WRAPPED_NATIVE_TOKEN` manually.
 
 Then run:
 
@@ -110,6 +118,8 @@ forge script script/DeployAaveSupplyManager.s.sol:DeployAaveSupplyManager \
 
 - This project uses local mocks for repeatable tests. For a production deployment, use the official Aave address book for the network you deploy to.
 - The security review in `docs/SECURITY_REVIEW.md` is an internal review, not an external audit.
+- Deployment config guidance is in `docs/DEPLOYMENT.md`; monitoring guidance is in `docs/MONITORING.md`.
+- Slippage, price, and risk assumptions are documented in `docs/RISK_ASSUMPTIONS.md`.
 - `OWNER` should be a multisig for serious deployments. Ownership transfer is two-step: the current owner proposes `pendingOwner`, then the pending owner accepts.
 - `pause` blocks supply, borrow, and repay. Withdraw and rescue remain available so the owner can reduce exposure during an incident.
 - `AaveSupplyManager` supplies assets on behalf of itself, so the contract owns the resulting Aave position.

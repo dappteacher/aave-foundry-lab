@@ -1,0 +1,22 @@
+{
+  "network": "arbitrum",
+  "chainId": 42161,
+  "rpcEnv": "ARBITRUM_RPC_URL",
+  "explorer": "https://arbiscan.io",
+  "aave": {
+    "poolAddressesProvider": "0xa97684ead0e402dC232d5A977953DF7ECBaB3CDb",
+    "pool": "0x794a61358D6845594F94dc1DB02A252b5b4814aD",
+    "oracle": "0xb56c2F0B653B2e0b10C9b928C8580Ac5Df02C7C7"
+  },
+  "assets": {
+    "wrappedNativeToken": "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1",
+    "wrappedNativeSymbol": "WETH",
+    "usdc": "0xaf88d065e77c8cC2239327C5EDb3A432268e5831"
+  },
+  "risk": {
+    "targetHealthFactorWad": "2000000000000000000",
+    "warningHealthFactorWad": "1600000000000000000",
+    "criticalHealthFactorWad": "1300000000000000000",
+    "liquidationBufferBps": 1500
+  }
+}

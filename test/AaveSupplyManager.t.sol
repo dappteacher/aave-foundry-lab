@@ -62,6 +62,23 @@ contract AaveSupplyManagerTest is Test {
         assertEq(pool.supplied(address(usdc), address(manager)), 500e6);
     }
 
+    function testFuzz_WithdrawTokenCapsAtSuppliedBalance(uint256 suppliedAmount, uint256 requestedAmount) public {
+        suppliedAmount = bound(suppliedAmount, 1, 1_000_000_000e6);
+        requestedAmount = bound(requestedAmount, 1, 2_000_000_000e6);
+        uint256 expectedWithdrawn = requestedAmount > suppliedAmount ? suppliedAmount : requestedAmount;
+
+        usdc.mint(address(manager), suppliedAmount);
+
+        vm.startPrank(owner);
+        manager.supplyToken(address(usdc), suppliedAmount, 0);
+        uint256 withdrawn = manager.withdrawToken(address(usdc), requestedAmount, recipient);
+        vm.stopPrank();
+
+        assertEq(withdrawn, expectedWithdrawn);
+        assertEq(pool.supplied(address(usdc), address(manager)), suppliedAmount - expectedWithdrawn);
+        assertEq(usdc.balanceOf(recipient), expectedWithdrawn);
+    }
+
     function testBorrowVariableTokenSendsDebtAssetToRecipientWhenHealthy() public {
         uint256 amount = 500e6;
         usdc.mint(address(pool), amount);
@@ -76,6 +93,29 @@ contract AaveSupplyManagerTest is Test {
         assertEq(pool.lastOnBehalfOf(), address(manager));
         assertEq(pool.lastReferralCode(), 7);
         assertEq(pool.lastInterestRateMode(), manager.VARIABLE_INTEREST_RATE_MODE());
+    }
+
+    function testFuzz_BorrowRespectsMinimumHealthFactor(uint256 healthFactor, uint256 minimumHealthFactor) public {
+        uint256 amount = 500e6;
+        healthFactor = bound(healthFactor, 1, 5e18);
+        minimumHealthFactor = bound(minimumHealthFactor, 1, 5e18);
+
+        usdc.mint(address(pool), amount);
+        pool.setUserAccountData(address(manager), 10_000e8, 2_000e8, 4_000e8, 8_250, 7_500, healthFactor);
+
+        vm.prank(owner);
+        if (healthFactor < minimumHealthFactor) {
+            vm.expectRevert(
+                abi.encodeWithSelector(AaveSupplyManager.UnhealthyPosition.selector, healthFactor, minimumHealthFactor)
+            );
+            manager.borrowVariableToken(address(usdc), amount, 0, recipient, minimumHealthFactor);
+            assertEq(pool.borrowed(address(usdc), address(manager)), 0);
+            assertEq(usdc.balanceOf(recipient), 0);
+        } else {
+            manager.borrowVariableToken(address(usdc), amount, 0, recipient, minimumHealthFactor);
+            assertEq(pool.borrowed(address(usdc), address(manager)), amount);
+            assertEq(usdc.balanceOf(recipient), amount);
+        }
     }
 
     function testBorrowTokenRevertsWhenHealthFactorIsTooLow() public {
@@ -109,6 +149,27 @@ contract AaveSupplyManagerTest is Test {
         assertEq(repaid, repayAmount);
         assertEq(pool.borrowed(address(usdc), address(manager)), borrowAmount - repayAmount);
         assertEq(usdc.balanceOf(address(pool)), repayAmount);
+    }
+
+    function testFuzz_RepayTokenCapsAtOutstandingDebt(uint256 borrowAmount, uint256 requestedRepay) public {
+        borrowAmount = bound(borrowAmount, 1, 1_000_000_000e6);
+        requestedRepay = bound(requestedRepay, 1, 2_000_000_000e6);
+        uint256 expectedRepaid = requestedRepay > borrowAmount ? borrowAmount : requestedRepay;
+        uint256 rateMode = manager.VARIABLE_INTEREST_RATE_MODE();
+
+        usdc.mint(address(pool), borrowAmount);
+        pool.setUserAccountData(address(manager), 10_000e8, 2_000e8, 4_000e8, 8_250, 7_500, 2e18);
+
+        vm.prank(owner);
+        manager.borrowVariableToken(address(usdc), borrowAmount, 0, recipient, 1.5e18);
+
+        usdc.mint(address(manager), expectedRepaid);
+
+        vm.prank(owner);
+        uint256 repaid = manager.repayToken(address(usdc), requestedRepay, rateMode);
+
+        assertEq(repaid, expectedRepaid);
+        assertEq(pool.borrowed(address(usdc), address(manager)), borrowAmount - expectedRepaid);
     }
 
     function testOnlyOwnerCanSupply() public {

@@ -7,4 +7,12 @@ optimizer = true
 optimizer_runs = 200
 via_ir = false
 
+[profile.default.fuzz]
+runs = 256
+
+[profile.default.invariant]
+runs = 64
+depth = 32
+fail_on_revert = false
+
 # See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options

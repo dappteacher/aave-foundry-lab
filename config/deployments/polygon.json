@@ -1,0 +1,22 @@
+{
+  "network": "polygon",
+  "chainId": 137,
+  "rpcEnv": "POLYGON_RPC_URL",
+  "explorer": "https://polygonscan.com",
+  "aave": {
+    "poolAddressesProvider": "0xa97684ead0e402dC232d5A977953DF7ECBaB3CDb",
+    "pool": "0x794a61358D6845594F94dc1DB02A252b5b4814aD",
+    "oracle": "0xb023e699F5a33916Ea823A16485e259257cA8Bd1"
+  },
+  "assets": {
+    "wrappedNativeToken": "0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270",
+    "wrappedNativeSymbol": "WMATIC",
+    "usdc": "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174"
+  },
+  "risk": {
+    "targetHealthFactorWad": "2000000000000000000",
+    "warningHealthFactorWad": "1600000000000000000",
+    "criticalHealthFactorWad": "1300000000000000000",
+    "liquidationBufferBps": 1500
+  }
+}

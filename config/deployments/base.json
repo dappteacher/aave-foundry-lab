@@ -1,0 +1,22 @@
+{
+  "network": "base",
+  "chainId": 8453,
+  "rpcEnv": "BASE_RPC_URL",
+  "explorer": "https://basescan.org",
+  "aave": {
+    "poolAddressesProvider": "0xe20fCBdBfFC4Dd138cE8b2E6FBb6CB49777ad64D",
+    "pool": "0xA238Dd80C259a72e81d7e4664a9801593F98d1c5",
+    "oracle": "0x0b09cBB6C6E261F5641b72949A1CedeF6e2f6674"
+  },
+  "assets": {
+    "wrappedNativeToken": "0x4200000000000000000000000000000000000006",
+    "wrappedNativeSymbol": "WETH",
+    "usdc": "0xd9aAEc86B65D86f6A7B5B1b0c42FFA531710b6CA"
+  },
+  "risk": {
+    "targetHealthFactorWad": "2000000000000000000",
+    "warningHealthFactorWad": "1600000000000000000",
+    "criticalHealthFactorWad": "1300000000000000000",
+    "liquidationBufferBps": 1500
+  }
+}
