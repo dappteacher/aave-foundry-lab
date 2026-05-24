@@ -1,12 +1,13 @@
 # Aave V3 Supply Manager
 
-A small pure Foundry project that demonstrates Solidity integration patterns around Aave V3. The core contract is an owner-controlled treasury adapter that can supply ERC20 assets or native ETH, represented as WETH, into an Aave-compatible pool and withdraw supplied liquidity back to a chosen recipient. A companion lens contract reads Aave account data such as collateral, debt, borrow capacity, liquidation threshold, LTV, and health factor.
+A small pure Foundry project that demonstrates Solidity integration patterns around Aave V3. The core contract is an owner-controlled treasury adapter that can supply ERC20 assets or native ETH, represented as WETH, into an Aave-compatible pool, withdraw supplied liquidity, borrow against collateral with a health-factor guard, and repay debt. A companion lens contract reads Aave account data such as collateral, debt, borrow capacity, liquidation threshold, LTV, and health factor.
 
 This is intentionally compact enough to review quickly, but it still shows practical DeFi engineering habits: minimal protocol interfaces, custom errors, events, ownership controls, deterministic tests, mocks, and a deployment script driven by environment variables.
 
 ## What It Shows
 
 - Aave V3 `supply` and `withdraw` integration through a focused pool interface.
+- Aave V3 `borrow` and `repay` flow with post-borrow health-factor validation.
 - Native ETH handling by wrapping to WETH before supplying to Aave.
 - Owner-only treasury operations with explicit validation and custom errors.
 - Unit tests that run locally without RPC access or forked mainnet state.
@@ -101,6 +102,7 @@ forge script script/DeployAaveSupplyManager.s.sol:DeployAaveSupplyManager \
 
 - This project uses local mocks for repeatable tests. For a production deployment, use the official Aave address book for the network you deploy to.
 - `AaveSupplyManager` supplies assets on behalf of itself, so the contract owns the resulting Aave position.
+- Borrowing also happens on behalf of the manager. The manager checks the resulting health factor before transferring borrowed tokens to the chosen recipient.
 - `rescueToken` is only for idle tokens accidentally left in the manager, not for assets already supplied into Aave.
 
 ---
@@ -108,8 +110,7 @@ forge script script/DeployAaveSupplyManager.s.sol:DeployAaveSupplyManager \
 # Author
 
 Yaghoub Adelzadeh
-Blockchain Engineer
+Senior Blockchain Engineer
 
 GitHub
 [https://github.com/dappteacher](https://github.com/dappteacher)
-

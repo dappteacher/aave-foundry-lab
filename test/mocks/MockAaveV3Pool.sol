@@ -14,12 +14,14 @@ contract MockAaveV3Pool {
     }
 
     mapping(address => mapping(address => uint256)) public supplied;
+    mapping(address => mapping(address => uint256)) public borrowed;
     mapping(address => AccountData) private accountData;
 
     address public lastAsset;
     uint256 public lastAmount;
     address public lastOnBehalfOf;
     uint16 public lastReferralCode;
+    uint256 public lastInterestRateMode;
 
     function supply(address asset, uint256 amount, address onBehalfOf, uint16 referralCode) external {
         IERC20(asset).transferFrom(msg.sender, address(this), amount);
@@ -39,6 +41,37 @@ contract MockAaveV3Pool {
         IERC20(asset).transfer(to, withdrawn);
 
         return withdrawn;
+    }
+
+    function borrow(address asset, uint256 amount, uint256 interestRateMode, uint16 referralCode, address onBehalfOf)
+        external
+    {
+        borrowed[asset][onBehalfOf] += amount;
+        lastAsset = asset;
+        lastAmount = amount;
+        lastOnBehalfOf = onBehalfOf;
+        lastReferralCode = referralCode;
+        lastInterestRateMode = interestRateMode;
+
+        IERC20(asset).transfer(msg.sender, amount);
+    }
+
+    function repay(address asset, uint256 amount, uint256 interestRateMode, address onBehalfOf)
+        external
+        returns (uint256)
+    {
+        uint256 debt = borrowed[asset][onBehalfOf];
+        uint256 repaid = amount == type(uint256).max || amount > debt ? debt : amount;
+
+        borrowed[asset][onBehalfOf] = debt - repaid;
+        lastAsset = asset;
+        lastAmount = amount;
+        lastOnBehalfOf = onBehalfOf;
+        lastInterestRateMode = interestRateMode;
+
+        IERC20(asset).transferFrom(msg.sender, address(this), repaid);
+
+        return repaid;
     }
 
     function setUserAccountData(
