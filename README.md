@@ -1,6 +1,6 @@
 # Aave V3 Supply Manager
 
-A small pure Foundry project that demonstrates Solidity integration patterns around Aave V3. The core contract is an owner-controlled treasury adapter that can supply ERC20 assets or native ETH, represented as WETH, into an Aave-compatible pool and withdraw supplied liquidity back to a chosen recipient.
+A small pure Foundry project that demonstrates Solidity integration patterns around Aave V3. The core contract is an owner-controlled treasury adapter that can supply ERC20 assets or native ETH, represented as WETH, into an Aave-compatible pool and withdraw supplied liquidity back to a chosen recipient. A companion lens contract reads Aave account data such as collateral, debt, borrow capacity, liquidation threshold, LTV, and health factor.
 
 This is intentionally compact enough to review quickly, but it still shows practical DeFi engineering habits: minimal protocol interfaces, custom errors, events, ownership controls, deterministic tests, mocks, and a deployment script driven by environment variables.
 
@@ -12,6 +12,7 @@ This is intentionally compact enough to review quickly, but it still shows pract
 - Unit tests that run locally without RPC access or forked mainnet state.
 - Optional Ethereum mainnet fork test against the real Aave V3 Pool.
 - Reusable address-book library for supported Aave V3 markets.
+- Position lens for Aave V3 account and health-factor data.
 - A deployment script suitable for real Aave V3 deployments once addresses are configured.
 
 ## Project Layout
@@ -19,6 +20,7 @@ This is intentionally compact enough to review quickly, but it still shows pract
 ```text
 src/
   AaveSupplyManager.sol        Main treasury adapter
+  AavePositionLens.sol         Read-only account risk helper
   interfaces/                  Minimal ERC20, WETH, and Aave V3 interfaces
   libraries/                   Network-specific Aave V3 addresses
 test/
@@ -101,6 +103,8 @@ forge script script/DeployAaveSupplyManager.s.sol:DeployAaveSupplyManager \
 - `AaveSupplyManager` supplies assets on behalf of itself, so the contract owns the resulting Aave position.
 - `rescueToken` is only for idle tokens accidentally left in the manager, not for assets already supplied into Aave.
 
+---
+
 # Author
 
 Yaghoub Adelzadeh
@@ -108,3 +112,4 @@ Blockchain Engineer
 
 GitHub
 [https://github.com/dappteacher](https://github.com/dappteacher)
+

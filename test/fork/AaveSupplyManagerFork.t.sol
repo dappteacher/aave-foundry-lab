@@ -2,6 +2,7 @@
 pragma solidity ^0.8.20;
 
 import {Test} from "forge-std/Test.sol";
+import {AavePositionLens} from "../../src/AavePositionLens.sol";
 import {AaveSupplyManager} from "../../src/AaveSupplyManager.sol";
 import {IERC20} from "../../src/interfaces/IERC20.sol";
 import {AaveV3Addresses} from "../../src/libraries/AaveV3Addresses.sol";
@@ -25,6 +26,7 @@ contract AaveSupplyManagerForkTest is Test {
         uint256 amount = 1 ether;
         AaveV3Addresses.Market memory market = AaveV3Addresses.ethereum();
         AaveSupplyManager manager = new AaveSupplyManager(market.pool, market.wrappedNativeToken, owner);
+        AavePositionLens lens = new AavePositionLens(market.pool);
 
         deal(market.wrappedNativeToken, address(manager), amount);
 
@@ -33,6 +35,10 @@ contract AaveSupplyManagerForkTest is Test {
 
         assertEq(IERC20(market.wrappedNativeToken).balanceOf(address(manager)), 0);
         assertApproxEqAbs(IERC20(market.wrappedNativeAToken).balanceOf(address(manager)), amount, 2);
+
+        AavePositionLens.AccountData memory data = lens.getAccountData(address(manager));
+        assertGt(data.totalCollateralBase, 0);
+        assertEq(data.totalDebtBase, 0);
 
         vm.prank(owner);
         uint256 withdrawn = manager.withdrawToken(market.wrappedNativeToken, type(uint256).max, recipient);
