@@ -46,7 +46,31 @@ If `DEPLOYMENT_CONFIG` is not set, the script can still use the Solidity address
 - Run the target fork tests if an RPC endpoint is available.
 - Dry-run the script without `--broadcast`.
 - Save the deployed manager address.
+- Run the deployment verification script.
 - Run the health check script after deployment.
+
+## Post-Deployment Verification
+
+After deployment, verify that the deployed manager matches the expected config:
+
+```shell
+DEPLOYMENT_CONFIG=config/deployments/ethereum.json \
+MANAGER=0xDeployedManager \
+OWNER=0xYourMultisig \
+EXPECTED_PAUSED=false \
+forge script script/VerifyDeployment.s.sol:VerifyDeployment \
+  --rpc-url $MAINNET_RPC_URL
+```
+
+The script checks:
+
+- manager Pool equals the config Pool
+- manager wrapped native token equals the config asset
+- manager owner equals `OWNER`
+- manager pause state equals `EXPECTED_PAUSED`
+- manager has no pending ownership transfer
+
+Run this immediately after deployment and after any ownership transfer.
 
 ## Address Sources
 

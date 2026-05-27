@@ -40,6 +40,7 @@ test/
 script/
   DeployAaveSupplyManager.s.sol
   CheckAaveHealth.s.sol        Health-factor monitoring helper
+  VerifyDeployment.s.sol       Post-deployment configuration verifier
 docs/
   DEPLOYMENT.md                Per-network deployment config guide
   MONITORING.md                Health factor and liquidation-risk runbook
@@ -100,6 +101,8 @@ DEPLOYMENT_CONFIG=config/deployments/ethereum.json
 AAVE_POOL=0x...
 WRAPPED_NATIVE_TOKEN=0x...
 OWNER=0x... # recommended: multisig address
+MANAGER=0x...
+EXPECTED_PAUSED=false
 ```
 
 By default, the deploy script reads `DEPLOYMENT_CONFIG` when provided. If no config file is set, it reads supported market addresses from `AaveV3Addresses` based on `block.chainid`. Set `USE_ADDRESS_BOOK=false` to provide `AAVE_POOL` and `WRAPPED_NATIVE_TOKEN` manually.
@@ -112,6 +115,16 @@ forge script script/DeployAaveSupplyManager.s.sol:DeployAaveSupplyManager \
   --private-key <PRIVATE_KEY> \
   --broadcast \
   --verify
+```
+
+After deployment, verify constructor/config state:
+
+```shell
+DEPLOYMENT_CONFIG=config/deployments/ethereum.json \
+MANAGER=0xDeployedManager \
+OWNER=0xYourMultisig \
+forge script script/VerifyDeployment.s.sol:VerifyDeployment \
+  --rpc-url <RPC_URL>
 ```
 
 ## Notes
