@@ -1,4 +1,4 @@
-name: CI
+name: Foundry
 
 on:
   push:
@@ -9,11 +9,11 @@ env:
   FOUNDRY_PROFILE: ci
 
 jobs:
-  check:
+  foundry:
     strategy:
       fail-fast: true
 
-    name: Foundry project
+    name: Format, build, test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -23,9 +23,10 @@ jobs:
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
 
-      - name: Show Forge version
+      - name: Show versions
         run: |
           forge --version
+          cast --version
 
       - name: Run Forge fmt
         run: |
@@ -41,3 +42,8 @@ jobs:
         run: |
           forge test -vvv
         id: test
+
+      - name: Run Forge coverage summary
+        run: |
+          forge coverage --summary
+        id: coverage
