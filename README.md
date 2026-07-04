@@ -208,8 +208,11 @@ This repo is production-inspired, not production-certified. Before managing mean
 - implement live monitoring and alerting
 - perform a small capped deployment first
 
-## Author
+---
 
-Yaghoub Adelzadeh  
-Senior Blockchain Engineer  
-[github.com/dappteacher](https://github.com/dappteacher)
+### Connect
+
+* GitHub: [https://github.com/dappteacher](https://github.com/dappteacher)
+* LinkedIn: [https://linkedin.com/in/dappteacher](https://linkedin.com/in/dappteacher)
+
+---
